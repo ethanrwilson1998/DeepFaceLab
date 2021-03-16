@@ -71,7 +71,7 @@ class ExtractSubprocessor(Subprocessor):
 
             # if self.type == 'all' or self.type == 'rects-s3fd' or 'landmarks' in self.type:
             #     self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=place_model_on_cpu)
-            self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=place_model_on_cpu)
+            self.rects_extractor = facelib.S3FDExtractor()
 
             if self.type == 'all' or 'landmarks' in self.type:
                 # for head type, extract "3D landmarks"
