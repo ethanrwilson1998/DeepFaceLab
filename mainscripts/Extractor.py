@@ -25,6 +25,8 @@ from DFLIMG import *
 
 DEBUG = False
 
+image_scale = 0.5
+
 class ExtractSubprocessor(Subprocessor):
     class Data(object):
         def __init__(self, filepath=None, rects=None, landmarks = None, landmarks_accurate=True, manual=False, force_output_path=None, final_output_files = None):
@@ -51,6 +53,7 @@ class ExtractSubprocessor(Subprocessor):
             self.cpu_only             = client_dict['device_type'] == 'CPU'
             self.final_output_path    = client_dict['final_output_path']
             self.output_debug_path    = client_dict['output_debug_path']
+            self.img_scale            = client_dict['img_scale']
 
             #transfer and set stdin in order to work code.interact in debug subprocess
             stdin_fd         = client_dict['stdin_fd']
@@ -71,7 +74,8 @@ class ExtractSubprocessor(Subprocessor):
 
             # if self.type == 'all' or self.type == 'rects-s3fd' or 'landmarks' in self.type:
             #     self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=place_model_on_cpu)
-            self.rects_extractor = facelib.S3FDExtractor()
+            #self.rects_extractor = facelib.S3FDExtractor()
+            self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=False)
 
             if self.type == 'all' or 'landmarks' in self.type:
                 # for head type, extract "3D landmarks"
@@ -106,6 +110,7 @@ class ExtractSubprocessor(Subprocessor):
                                                             image=image,
                                                             max_faces_from_image=self.max_faces_from_image,
                                                             rects_extractor=self.rects_extractor,
+                                                            img_scale=self.img_scale,
                                                             )
 
             if 'landmarks' in self.type or self.type == 'all':
@@ -133,6 +138,7 @@ class ExtractSubprocessor(Subprocessor):
                         image,
                         max_faces_from_image,
                         rects_extractor,
+                        img_scale,
                         ):
             h,w,c = image.shape
             if min(h,w) < 128:
@@ -148,7 +154,7 @@ class ExtractSubprocessor(Subprocessor):
                         rotated_image = image[::-1,::-1,:]
                     elif rot == 270:
                         rotated_image = image.swapaxes( 0,1 )[::-1,:,:]
-                    rects = data.rects = rects_extractor.extract (rotated_image, is_bgr=True)
+                    rects = data.rects = rects_extractor.extract (rotated_image, is_bgr=True, image_scale=img_scale)
                     if len(rects) != 0:
                         data.rects_rotation = rot
                         break
@@ -331,7 +337,7 @@ class ExtractSubprocessor(Subprocessor):
         elif type == 'final':
             return [ (i, 'CPU', 'CPU%d' % (i), 0 ) for i in (range(min(8, multiprocessing.cpu_count())) if not DEBUG else [0]) ]
 
-    def __init__(self, input_data, type, image_size=None, jpeg_quality=None, face_type=None, output_debug_path=None, manual_window_size=0, max_faces_from_image=0, final_output_path=None, device_config=None):
+    def __init__(self, input_data, type, img_scale=0.5, image_size=None, jpeg_quality=None, face_type=None, output_debug_path=None, manual_window_size=0, max_faces_from_image=0, final_output_path=None, device_config=None):
         if type == 'landmarks-manual':
             for x in input_data:
                 x.manual = True
@@ -339,6 +345,10 @@ class ExtractSubprocessor(Subprocessor):
         self.input_data = input_data
 
         self.type = type
+
+        global image_scale
+        self.img_scale = img_scale
+
         self.image_size = image_size
         self.jpeg_quality = jpeg_quality
         self.face_type = face_type
@@ -396,6 +406,7 @@ class ExtractSubprocessor(Subprocessor):
                      'max_faces_from_image':self.max_faces_from_image,
                      'output_debug_path': self.output_debug_path,
                      'final_output_path': self.final_output_path,
+                     'img_scale': self.img_scale,
                      'stdin_fd': sys.stdin.fileno() }
 
 

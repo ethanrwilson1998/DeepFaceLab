@@ -175,7 +175,7 @@ class S3FDExtractor(object):
     def __exit__(self, exc_type=None, exc_value=None, traceback=None):
         return False #pass exception between __enter__ and __exit__ to outter level
 
-    def extract (self, input_image, is_bgr=True, is_remove_intersects=False):
+    def extract (self, input_image, is_bgr=True, is_remove_intersects=False, image_scale=0.5):
 
         if is_bgr:
             input_image = input_image[:,:,::-1]
@@ -184,7 +184,8 @@ class S3FDExtractor(object):
         (h, w, ch) = input_image.shape
 
         d = max(w, h)
-        scale_to = 640 if d >= 1280 else d / 2
+        scale_to = image_scale * d
+        # scale_to = 640 if d >= 1280 else d / 2
         scale_to = max(64, scale_to)
 
         input_scale = d / scale_to
