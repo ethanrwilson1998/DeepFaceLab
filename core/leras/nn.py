@@ -79,6 +79,7 @@ class nn():
             import tensorflow
             
             tf_version = getattr(tensorflow,'VERSION', None)
+            tf_version='2'
             if tf_version is None:
                 tf_version = tensorflow.version.GIT_VERSION
                 if tf_version[0] == 'v':

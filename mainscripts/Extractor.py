@@ -25,7 +25,6 @@ from DFLIMG import *
 
 DEBUG = False
 
-image_scale = 0.5
 
 class ExtractSubprocessor(Subprocessor):
     class Data(object):
@@ -72,13 +71,15 @@ class ExtractSubprocessor(Subprocessor):
 
             self.log_info (f"Running on {client_dict['device_name'] }")
 
-            # if self.type == 'all' or self.type == 'rects-s3fd' or 'landmarks' in self.type:
-            #     self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=place_model_on_cpu)
+            if self.type == 'all' or self.type == 'rects-s3fd' or 'landmarks' in self.type:
+                self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=place_model_on_cpu)
             #self.rects_extractor = facelib.S3FDExtractor()
-            self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=False)
+            #self.rects_extractor = facelib.S3FDExtractor(place_model_on_cpu=False)
 
             if self.type == 'all' or 'landmarks' in self.type:
                 # for head type, extract "3D landmarks"
+                if self.face_type is None:
+                    self.face_type = FaceType.WHOLE_FACE
                 self.landmarks_extractor = facelib.FANExtractor(landmarks_3D=self.face_type >= FaceType.HEAD,
                                                                 place_model_on_cpu=place_model_on_cpu)
 
@@ -154,7 +155,7 @@ class ExtractSubprocessor(Subprocessor):
                         rotated_image = image[::-1,::-1,:]
                     elif rot == 270:
                         rotated_image = image.swapaxes( 0,1 )[::-1,:,:]
-                    rects = data.rects = rects_extractor.extract (rotated_image, is_bgr=True, image_scale=img_scale)
+                    rects = data.rects = rects_extractor.extract (rotated_image, is_bgr=True)
                     if len(rects) != 0:
                         data.rects_rotation = rot
                         break
@@ -337,7 +338,7 @@ class ExtractSubprocessor(Subprocessor):
         elif type == 'final':
             return [ (i, 'CPU', 'CPU%d' % (i), 0 ) for i in (range(min(8, multiprocessing.cpu_count())) if not DEBUG else [0]) ]
 
-    def __init__(self, input_data, type, img_scale=0.5, image_size=None, jpeg_quality=None, face_type=None, output_debug_path=None, manual_window_size=0, max_faces_from_image=0, final_output_path=None, device_config=None):
+    def __init__(self, input_data, type, image_size=None, jpeg_quality=None, face_type=None, output_debug_path=None, manual_window_size=0, max_faces_from_image=0, final_output_path=None, device_config=None, img_scale=0.5):
         if type == 'landmarks-manual':
             for x in input_data:
                 x.manual = True
